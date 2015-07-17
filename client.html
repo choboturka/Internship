@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+    <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.3.14/angular.min.js"></script>
+
+</head>
+<body>
+
+<div class="container-fluid" ng-app="RCApp" ng-controller="RCController">
+    <h1>Связыватель имен 3000<sup>™</sup></h1>
+    <div class="row">
+        <div class="col-sm-4">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <div class="input-group">
+
+                        <input ng-model="search_where" type="text" class="form-control" placeholder="Куда подвязывать...">
+                        <span class="input-group-btn">
+                            <button ng-click="get_where(search_where,1)" class="btn btn-default" type="button">Поиск</button>
+                        </span>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="list-group">
+                        <a ng-repeat="winner in bind_where_objects" ng-click="select_current(winner)" type="button" class="list-group-item">
+                            <span class="badge">{{winner.children.length}}</span>
+                            <!--<span class="label label-info">{{winner.children.length}}</span>-->
+                            {{winner.name}}
+                        </a>
+                    </div>
+                    <ul class="pager" ng-show="bind_where_total_pages > 1">
+                        <li class="previous">
+                            <button ng-click="get_where(search_where,bind_where_page-1)" class="btn btn-link" ng-disabled="bind_where_page < 2">Назад</button>
+                        </li>
+                        <li>Страница {{bind_where_page}} из {{bind_where_total_pages}} </li>
+                        <li class="next">
+                            <button ng-click="get_where(search_where,bind_where_page+1)" class="btn btn-link" ng-disabled="bind_where_page >= bind_where_total_pages">Вперед</button>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-4">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <div class="input-group">
+                        <input ng-model="search_what" type="text" class="form-control" placeholder="Что подвязывать...">
+                        <span class="input-group-btn">
+                            <button ng-click="get_what(search_what,1)" class="btn btn-default" type="button">Поиск</button>
+                        </span>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="list-group">
+                        <a ng-repeat="winner in bind_what_objects" ng-click="add_winner(winner)" class="list-group-item">
+                            <span class="badge">{{winner.children.length}}</span>
+                            <!--<span class="label label-info">{{winner.children.length}}</span>-->
+                            <!--<span class="glyphicon glyphicon-plus"></span>-->
+                            <p class="list-group-item-text">{{winner.name}}</p>
+
+                        </a>
+                    </div>
+                    <ul class="pager" ng-show="bind_what_total_pages > 1">
+                        <li class="previous">
+                            <button ng-click="get_what(search_what,bind_what_page-1)" class="btn btn-link" ng-disabled="bind_what_page < 2">Назад</button>
+                        </li>
+                        <li>Страница {{bind_what_page}} из {{bind_what_total_pages}} </li>
+                        <li class="next">
+                            <button ng-click="get_what(search_what,bind_what_page+1)" class="btn btn-link" ng-disabled="bind_what_page >= bind_what_total_pages">Вперед</button>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+        </div>
+        <div class="col-sm-4">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h1 class="panel-title">Результат:
+                        <button ng-click="bind_done()" class="btn btn-primary btn-sm" type="button">Подвязать</button>
+                        <button ng-click="bind_cancel()" class="btn btn-danger btn-sm" type="button">Сбросить</button>
+                    </h1>
+
+                </div>
+                <div class="panel-body">
+                    <h4 ng-show="current.name">
+                        Уже подвязано:
+                    </h4>
+                    <div class="list-group">
+                        <a class="list-group-item disabled" ng-show="current.name">
+                            {{current.name}}
+                        </a>
+                        <a ng-click="remove_winner(child)" class="list-group-item" ng-repeat="child in current.children">
+                            {{child.name}}
+                        </a>
+                    </div>
+                    <h4 ng-show="deletable.length">
+                        Будет отвязано:
+                    </h4>
+                    <div class="list-group" >
+                        <p class="list-group-item" ng-repeat="winner in deletable">
+                            {{winner.name}}
+                        </p>
+                    </div>
+                    <h4 ng-show="pending.length">
+                        Будет подвязано:
+                    </h4>
+                    <div class="list-group" ng-repeat="winner in pending">
+                        <a class="list-group-item list-group-item-info">
+                            {{winner.name}}
+                        </a>
+                        <p class="list-group-item" ng-repeat="child in winner.children">
+                            {{child.name}}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+</body>
+<script>
+
+    var app = angular.module('RCApp', []);
+
+    app.controller('RCController', function($scope, $http) {
+
+//        $scope.letters = ['q','w','e','r','t','y','u','i','o','p','a','s','d','f','g','h','j','k','l','z','x','c','v','b','n','m',
+//                            'й','ц','у','к','е','н','г','ш','щ','з','х','ъ','ф','ы','в','а','п','р','о','л','д','ж','э','я','ч','с','м','и','т','ь','б','ю',
+//                            'ї','і','є'
+//        ];
+
+        $scope.get_where = function(search_tag, page){
+            $http.get('http://127.0.0.1:5000/api/winner?q={"filters":[{"name":"name","op":"like","val":"%' + search_tag + '%"}]}&page=' + page)
+                    .success(function(data){
+                        $scope.bind_where_objects = data.objects;
+                        $scope.bind_where_total_pages = data.total_pages;
+                        $scope.bind_where_page = data.page;
+                    });
+        };
+
+        $scope.get_what = function(search_tag, page){
+            $http.get('http://127.0.0.1:5000/api/winner?q={"filters":[{"name":"name","op":"like","val":"%' + search_tag + '%"}]}&page=' + page)
+                    .success(function(data){
+                        $scope.bind_what_objects = data.objects;
+                        $scope.bind_what_total_pages = data.total_pages;
+                        $scope.bind_what_page = data.page;
+                    });
+        };
+
+        $scope.deletable = [];
+        $scope.pending = [];
+
+        $scope.add_winner = function(win){
+            $scope.pending.push(win);
+        };
+
+        $scope.remove_winner = function(win){
+            $scope.deletable.push(win);
+        };
+
+        $scope.select_current = function(win){
+            $scope.current = win;
+        };
+
+        $scope.bind_pending_objects = function() {
+            var children = [];
+            var parents = [];
+            for (var i = 0; i < $scope.pending.length; i++) {
+                if ($scope.current.id != $scope.pending[i].id) {
+                    parents.push('{"id":'+$scope.pending[i].id+'}');
+                    for (var j = 0; j < $scope.pending[i].children.length; j++) {
+                        children.push('{"id":'+$scope.pending[i].children[j].id+'}')
+                    }
+                }
+            }
+            $http.patch('http://127.0.0.1:5000/api/winner/' + $scope.current.id, '{"children":{"add":['+children+']}}');
+            $http.patch('http://127.0.0.1:5000/api/winner/' + $scope.current.id, '{"children":{"add":['+parents+']}}');
+            $scope.pending = []
+        };
+
+        $scope.unbind_deletable_objects = function() {
+            var children = [];
+            for (var i = 0; i < $scope.deletable.length; i++) {
+                if ($scope.current.id != $scope.deletable[i].id) {
+                    children.push('{"id":'+$scope.deletable[i].id+'}');
+                }
+            }
+            $http.patch('http://127.0.0.1:5000/api/winner/' + $scope.current.id, '{"children":{"remove":['+children+']}}');
+//            $http.patch('http://127.0.0.1:5000/api/winner/' + $scope.current.id, '{"children":{"add":['+parents+']}}');
+            $scope.deletable = [];
+        };
+
+        $scope.bind_done = function(){
+            $scope.unbind_deletable_objects();
+            $scope.bind_pending_objects();
+        };
+
+        $scope.bind_cancel = function(){
+            $scope.pending = [];
+            $scope.deletable = [];
+        };
+
+    });
+
+</script>
+</html>
